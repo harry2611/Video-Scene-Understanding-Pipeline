@@ -36,10 +36,10 @@ class Settings(BaseSettings):
     )
     temporal_window_size: int = Field(8, validation_alias="PIPELINE_TEMPORAL_WINDOW_SIZE")
     temporal_stride: int = Field(4, validation_alias="PIPELINE_TEMPORAL_STRIDE")
-    device: str = Field("auto", validation_alias="PIPELINE_DEVICE")
+    device: str = Field("cpu", validation_alias="PIPELINE_DEVICE")
     classifier_batch_size: int = Field(8, validation_alias="PIPELINE_CLASSIFIER_BATCH_SIZE")
     top_k: int = Field(5, validation_alias="PIPELINE_TOP_K")
-    enable_clip: bool = Field(True, validation_alias="PIPELINE_ENABLE_CLIP")
+    enable_clip: bool = Field(False, validation_alias="PIPELINE_ENABLE_CLIP")
     clip_model_name: str = Field(
         "openai/clip-vit-base-patch32",
         validation_alias="PIPELINE_CLIP_MODEL_NAME",
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     blur_threshold: float = Field(100.0, validation_alias="PIPELINE_BLUR_THRESHOLD")
     brightness_min: float = Field(35.0, validation_alias="PIPELINE_BRIGHTNESS_MIN")
     brightness_max: float = Field(220.0, validation_alias="PIPELINE_BRIGHTNESS_MAX")
-    enable_multi_gpu: bool = Field(True, validation_alias="PIPELINE_ENABLE_MULTI_GPU")
+    enable_multi_gpu: bool = Field(False, validation_alias="PIPELINE_ENABLE_MULTI_GPU")
     queue_name: str = Field("video-scene-jobs", validation_alias="PIPELINE_QUEUE_NAME")
 
 

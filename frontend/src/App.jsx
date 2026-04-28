@@ -19,9 +19,9 @@ function App() {
   const [fps, setFps] = useState(1);
   const [classifier, setClassifier] = useState("resnet50");
   const [detector, setDetector] = useState("histogram");
-  const [clipEnabled, setClipEnabled] = useState(true);
+  const [clipEnabled, setClipEnabled] = useState(false);
   const [qualityEnabled, setQualityEnabled] = useState(true);
-  const [multiGpuEnabled, setMultiGpuEnabled] = useState(true);
+  const [multiGpuEnabled, setMultiGpuEnabled] = useState(false);
   const [job, setJob] = useState(null);
   const [status, setStatus] = useState(null);
   const [metadata, setMetadata] = useState(null);
