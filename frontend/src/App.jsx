@@ -428,6 +428,7 @@ function EmptyState({ icon, text }) {
 function assetUrl(path) {
   if (!path) return "";
   if (path.startsWith("http") || path.startsWith("/artifacts")) return `${API_BASE}${path}`;
+  if (path.startsWith("artifacts/")) return `${API_BASE}/${path}`;
   const marker = "/artifacts/";
   const index = path.indexOf(marker);
   if (index >= 0) return `${API_BASE}${path.slice(index)}`;
