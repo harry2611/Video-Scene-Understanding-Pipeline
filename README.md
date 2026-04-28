@@ -114,7 +114,7 @@ python scripts/benchmark.py ./video.mp4 --fps 1 --runs 3 --compare-multi-gpu \
 Configuration is environment-variable driven. Common values:
 
 ```bash
-DATABASE_URL=postgresql+psycopg://scene:scene@localhost:5432/scene_pipeline
+DATABASE_URL=postgresql+psycopg://scene:scene@localhost:55432/scene_pipeline
 REDIS_URL=redis://localhost:6379/0
 PIPELINE_ARTIFACT_DIR=artifacts
 PIPELINE_DEFAULT_FPS=1

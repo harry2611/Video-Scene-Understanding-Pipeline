@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     )
 
     database_url: str = Field(
-        "postgresql+psycopg://scene:scene@localhost:5432/scene_pipeline",
+        "postgresql+psycopg://scene:scene@localhost:55432/scene_pipeline",
         validation_alias=AliasChoices("DATABASE_URL", "PIPELINE_DATABASE_URL"),
     )
     redis_url: str = Field(
