@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/harry2611/Video-Scene-Understanding-Pipeline/schemas/video_metadata.schema.json",
+  "title": "Video Scene Understanding Metadata",
+  "type": "object",
+  "required": [
+    "video_id",
+    "source",
+    "local_video_path",
+    "created_at",
+    "config",
+    "frames",
+    "temporal_windows",
+    "scenes",
+    "benchmark"
+  ],
+  "properties": {
+    "video_id": { "type": "string" },
+    "source": { "type": "string" },
+    "local_video_path": { "type": "string" },
+    "duration": { "type": ["number", "null"], "minimum": 0 },
+    "created_at": { "type": "string", "format": "date-time" },
+    "metadata_path": { "type": ["string", "null"] },
+    "config": {
+      "type": "object",
+      "required": [
+        "fps",
+        "scene_detector",
+        "classifier",
+        "temporal_window_size",
+        "temporal_stride",
+        "clip_enabled"
+      ],
+      "properties": {
+        "fps": { "type": "number", "exclusiveMinimum": 0 },
+        "scene_detector": { "type": "string", "enum": ["histogram", "pyscenedetect"] },
+        "classifier": { "type": "string", "enum": ["resnet50", "efficientnet_b0"] },
+        "temporal_window_size": { "type": "integer", "minimum": 1 },
+        "temporal_stride": { "type": "integer", "minimum": 1 },
+        "clip_enabled": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "frames": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/frame" }
+    },
+    "temporal_windows": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/temporal_window" }
+    },
+    "scenes": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scene" }
+    },
+    "benchmark": { "$ref": "#/$defs/benchmark" }
+  },
+  "$defs": {
+    "label_score": {
+      "type": "object",
+      "required": ["label", "confidence"],
+      "properties": {
+        "label": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "frame": {
+      "type": "object",
+      "required": ["frame_index", "timestamp", "path"],
+      "properties": {
+        "frame_index": { "type": "integer", "minimum": 0 },
+        "timestamp": { "type": "number", "minimum": 0 },
+        "path": { "type": "string" },
+        "width": { "type": ["integer", "null"], "minimum": 1 },
+        "height": { "type": ["integer", "null"], "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "temporal_window": {
+      "type": "object",
+      "required": ["window_index", "start_timestamp", "end_timestamp", "frame_indices"],
+      "properties": {
+        "window_index": { "type": "integer", "minimum": 0 },
+        "start_timestamp": { "type": "number", "minimum": 0 },
+        "end_timestamp": { "type": "number", "minimum": 0 },
+        "frame_indices": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "scene": {
+      "type": "object",
+      "required": [
+        "scene_id",
+        "scene_index",
+        "start_timestamp",
+        "end_timestamp",
+        "duration",
+        "frame_indices",
+        "labels",
+        "confidence",
+        "metadata"
+      ],
+      "properties": {
+        "scene_id": { "type": "string" },
+        "scene_index": { "type": "integer", "minimum": 0 },
+        "start_timestamp": { "type": "number", "minimum": 0 },
+        "end_timestamp": { "type": "number", "minimum": 0 },
+        "duration": { "type": "number", "minimum": 0 },
+        "frame_indices": {
+          "type": "array",
+          "items": { "type": "integer", "minimum": 0 }
+        },
+        "representative_frame": { "type": ["string", "null"] },
+        "labels": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/label_score" }
+        },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "clip_embedding": {
+          "type": ["array", "null"],
+          "items": { "type": "number" }
+        },
+        "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "benchmark": {
+      "type": "object",
+      "required": [
+        "total_latency_ms",
+        "frames_per_second",
+        "total_frames",
+        "stage_latencies"
+      ],
+      "properties": {
+        "total_latency_ms": { "type": "number", "minimum": 0 },
+        "frames_per_second": { "type": "number", "minimum": 0 },
+        "total_frames": { "type": "integer", "minimum": 0 },
+        "stage_latencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "latency_ms", "details"],
+            "properties": {
+              "name": { "type": "string" },
+              "latency_ms": { "type": "number", "minimum": 0 },
+              "details": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
+

@@ -1,0 +1,66 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: scene
+      POSTGRES_PASSWORD: scene
+      POSTGRES_DB: scene_pipeline
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scene -d scene_pipeline"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn scene_pipeline.api.main:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: postgresql+psycopg://scene:scene@postgres:5432/scene_pipeline
+      REDIS_URL: redis://redis:6379/0
+      PIPELINE_ARTIFACT_DIR: /app/artifacts
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./artifacts:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: python -m scene_pipeline.worker.jobs
+    environment:
+      DATABASE_URL: postgresql+psycopg://scene:scene@postgres:5432/scene_pipeline
+      REDIS_URL: redis://redis:6379/0
+      PIPELINE_ARTIFACT_DIR: /app/artifacts
+    volumes:
+      - ./artifacts:/app/artifacts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+

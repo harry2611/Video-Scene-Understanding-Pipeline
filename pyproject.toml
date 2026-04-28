@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "video-scene-understanding-pipeline"
+version = "0.1.0"
+description = "Video scene understanding pipeline with FFmpeg, PyTorch, FastAPI, PostgreSQL, Redis, and React dashboard."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.6",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.1",
+    "redis>=5.0",
+    "rq>=1.16",
+    "yt-dlp>=2024.3.10",
+    "opencv-python>=4.8",
+    "scenedetect[opencv]>=0.6.3",
+    "numpy>=1.24",
+    "Pillow>=10.0",
+    "torch>=2.2",
+    "torchvision>=0.17",
+    "transformers>=4.39",
+    "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "jsonschema>=4.21",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+scene-pipeline = "scene_pipeline.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["scene_pipeline*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
