@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     brightness_max: float = Field(220.0, validation_alias="PIPELINE_BRIGHTNESS_MAX")
     enable_multi_gpu: bool = Field(False, validation_alias="PIPELINE_ENABLE_MULTI_GPU")
     queue_name: str = Field("video-scene-jobs", validation_alias="PIPELINE_QUEUE_NAME")
+    worker_mode: str = Field("simple", validation_alias="PIPELINE_WORKER_MODE")
 
 
 @lru_cache(maxsize=1)

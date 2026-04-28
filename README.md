@@ -126,6 +126,7 @@ PIPELINE_ENABLE_QUALITY_SCORING=true
 PIPELINE_BLUR_THRESHOLD=100
 PIPELINE_BRIGHTNESS_MIN=35
 PIPELINE_BRIGHTNESS_MAX=220
+PIPELINE_WORKER_MODE=simple
 ```
 
 ## Metadata Contract
@@ -148,3 +149,4 @@ The downstream JSON schema lives at [`schemas/video_metadata.schema.json`](schem
 - CLIP vectors are stored as JSON arrays in PostgreSQL for portability. You can swap this to `pgvector` later without changing the public API shape.
 - Redis queueing uses RQ. If Redis is unavailable, the synchronous endpoint remains useful for local development.
 - DataParallel activates only when CUDA is selected and more than one GPU is visible to PyTorch. CPU and single-GPU runs still execute normally.
+- `PIPELINE_WORKER_MODE=simple` avoids macOS fork crashes when local jobs load native ML libraries. Use `PIPELINE_WORKER_MODE=forked` only on Linux/server environments where RQ forking is desired.

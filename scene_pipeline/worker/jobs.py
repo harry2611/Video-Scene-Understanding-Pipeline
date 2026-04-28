@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from rq import Worker
+from rq import SimpleWorker, Worker
 
 from scene_pipeline.config import get_settings
 from scene_pipeline.core.pipeline import PipelineOptions, VideoScenePipeline
@@ -36,10 +36,10 @@ def process_video_job(job_id: str, source: str, options_payload: dict) -> dict:
 def main() -> None:
     settings = get_settings()
     init_db()
-    worker = Worker([settings.queue_name], connection=get_redis_connection())
+    worker_class = SimpleWorker if settings.worker_mode == "simple" else Worker
+    worker = worker_class([settings.queue_name], connection=get_redis_connection())
     worker.work()
 
 
 if __name__ == "__main__":
     main()
-
