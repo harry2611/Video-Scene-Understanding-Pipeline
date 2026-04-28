@@ -29,6 +29,44 @@ An end-to-end video scene understanding system with frame extraction, shot bound
 - Dashboard quality panels for real-time polling of metrics, scene thumbnails, quality scores, and review counts
 - Benchmark comparison mode for single-device versus DataParallel throughput, with JSON and SVG chart output
 
+## Dashboard Walkthrough
+
+The screenshots below show the pipeline running on a YouTube video source, using histogram scene detection, ResNet50 classification, CLIP embeddings, and frame quality scoring.
+
+### Completed Processing and Stage Metrics
+
+![Completed dashboard metrics](docs/screenshots/dashboard-completed-metrics.png)
+
+This screen shows a completed video-processing job. The dashboard summarizes 155 detected scenes, throughput in frames/sec, total latency, number of processed jobs, average quality score, and review-scene count. The stage-latency table breaks down the runtime across ingestion, frame extraction, quality scoring, scene detection, temporal batching, and frame classification.
+
+### Scene Quality Review
+
+![Scene quality top](docs/screenshots/scene-quality-top.png)
+
+This view focuses on the beginning of the scene-quality report. Each scene receives a quality score, an action recommendation such as `accept` or `reject`, and flags like `blurry`, `too_bright`, or `high_low_quality_ratio`. This helps identify video segments that may be weak training data for downstream ML workflows.
+
+![Scene quality tail](docs/screenshots/scene-quality-tail.png)
+
+This screenshot shows later scene-quality results near the end of the video. It demonstrates that the quality pipeline continues scoring every detected segment, including darker end-credit scenes, and can distinguish clean high-quality scenes from segments that require review.
+
+### Detected Scenes With Thumbnails
+
+![Detected scenes start](docs/screenshots/detected-scenes-start.png)
+
+This screen shows the detected-scene grid after thumbnail rendering is working. Each scene card contains a representative frame, scene number, timestamp range, top ResNet50 label, confidence, and quality score. The first scenes include title cards, landscape shots, and character/object frames from the video.
+
+![Detected scenes middle](docs/screenshots/detected-scenes-middle.png)
+
+This screenshot shows mid-video scenes with different characters and visual content. It demonstrates that the dashboard can display many scene cards while preserving the timestamped scene-level metadata produced by the backend.
+
+![Detected scenes forest](docs/screenshots/detected-scenes-forest.png)
+
+This view captures another part of the video with forest scenes and character close-ups. The labels come from ImageNet classes, so they are object-oriented rather than cinematic scene descriptions, but they still provide useful scene-level visual tags.
+
+![Detected scenes credits](docs/screenshots/detected-scenes-credits.png)
+
+This screenshot shows late-video and credits scenes. The pipeline still detects these as individual visual segments, assigns labels such as `menu` or `web site` for text-heavy frames, and reports high or low quality depending on blur and brightness characteristics.
+
 ## Quick Start
 
 ### 1. Install System Dependencies
