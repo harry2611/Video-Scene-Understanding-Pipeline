@@ -18,13 +18,20 @@ class TorchSceneClassifier:
         top_k: int = 5,
         batch_size: int = 8,
         pretrained: bool = True,
+        use_data_parallel: bool = True,
     ) -> None:
         self.model_name = model_name
         self.device_name = device
         self.top_k = top_k
         self.batch_size = batch_size
         self.pretrained = pretrained
+        self.use_data_parallel = use_data_parallel
         self._loaded = False
+        self._runtime_info: dict[str, object] = {
+            "device": device,
+            "data_parallel": False,
+            "gpu_count": 0,
+        }
 
     def _load(self) -> None:
         if self._loaded:
@@ -73,6 +80,15 @@ class TorchSceneClassifier:
 
         self.model.eval()
         self.model.to(self.device)
+        gpu_count = torch.cuda.device_count() if self.device.type == "cuda" else 0
+        if self.use_data_parallel and gpu_count > 1:
+            self.model = torch.nn.DataParallel(self.model)
+        self._runtime_info = {
+            "device": str(self.device),
+            "data_parallel": bool(self.use_data_parallel and gpu_count > 1),
+            "gpu_count": int(gpu_count),
+            "batch_size": self.batch_size,
+        }
         self._loaded = True
 
     def classify_scene(self, frames: list[FrameMetadata]) -> list[LabelScore]:
@@ -105,6 +121,9 @@ class TorchSceneClassifier:
         ]
         return sorted(aggregated, key=lambda item: item.confidence, reverse=True)[: self.top_k]
 
+    def runtime_info(self) -> dict[str, object]:
+        return dict(self._runtime_info)
+
 
 class NullSceneClassifier:
     """Development fallback that keeps the pipeline testable without model packages."""
@@ -113,17 +132,27 @@ class NullSceneClassifier:
         confidence = 1.0 if frames else 0.0
         return [LabelScore(label="unclassified", confidence=confidence)]
 
+    def runtime_info(self) -> dict[str, object]:
+        return {
+            "device": "none",
+            "data_parallel": False,
+            "gpu_count": 0,
+            "batch_size": 0,
+            "fallback": "null_classifier",
+        }
+
 
 def build_classifier(
     model_name: str,
     device: str,
     top_k: int,
     batch_size: int,
+    use_data_parallel: bool = True,
 ) -> TorchSceneClassifier:
     return TorchSceneClassifier(
         model_name=model_name,
         device=device,
         top_k=top_k,
         batch_size=batch_size,
+        use_data_parallel=use_data_parallel,
     )
-

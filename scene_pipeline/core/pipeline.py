@@ -10,6 +10,11 @@ from scene_pipeline.core.benchmark import BenchmarkRecorder
 from scene_pipeline.core.classification import NullSceneClassifier, build_classifier
 from scene_pipeline.core.embeddings import CLIPSceneEmbedder
 from scene_pipeline.core.ingestion import extract_frames, probe_duration, resolve_video_source
+from scene_pipeline.core.quality import (
+    annotate_frame_quality,
+    choose_representative_frame,
+    score_scene_quality,
+)
 from scene_pipeline.core.scene_detection import detect_scenes
 from scene_pipeline.core.temporal import sliding_windows
 from scene_pipeline.schemas import PipelineConfig, SceneMetadata, VideoMetadata
@@ -23,6 +28,8 @@ class PipelineOptions:
     temporal_window_size: int
     temporal_stride: int
     enable_clip: bool
+    enable_quality_scoring: bool = True
+    enable_multi_gpu: bool = True
 
     @classmethod
     def from_settings(cls, settings: Settings) -> "PipelineOptions":
@@ -33,6 +40,8 @@ class PipelineOptions:
             temporal_window_size=settings.temporal_window_size,
             temporal_stride=settings.temporal_stride,
             enable_clip=settings.enable_clip,
+            enable_quality_scoring=settings.enable_quality_scoring,
+            enable_multi_gpu=settings.enable_multi_gpu,
         )
 
 
@@ -64,6 +73,20 @@ class VideoScenePipeline:
         if not frames:
             raise RuntimeError("FFmpeg extracted zero frames from the video")
 
+        if options.enable_quality_scoring:
+            with recorder.stage(
+                "quality_scoring",
+                blur_threshold=self.settings.blur_threshold,
+                brightness_min=self.settings.brightness_min,
+                brightness_max=self.settings.brightness_max,
+            ):
+                frames = annotate_frame_quality(
+                    frames,
+                    blur_threshold=self.settings.blur_threshold,
+                    brightness_min=self.settings.brightness_min,
+                    brightness_max=self.settings.brightness_max,
+                )
+
         with recorder.stage("scene_detection", detector=options.scene_detector):
             scene_ranges = detect_scenes(
                 local_video_path,
@@ -89,12 +112,17 @@ class VideoScenePipeline:
                 device=self.settings.device,
                 top_k=self.settings.top_k,
                 batch_size=self.settings.classifier_batch_size,
+                use_data_parallel=options.enable_multi_gpu,
             )
         except Exception:
             classifier = NullSceneClassifier()
 
         scenes: list[SceneMetadata] = []
-        with recorder.stage("frame_classification", classifier=options.classifier):
+        with recorder.stage(
+            "frame_classification",
+            classifier=options.classifier,
+            multi_gpu_enabled=options.enable_multi_gpu,
+        ) as classification_details:
             for scene_index, (start_index, end_index) in enumerate(scene_ranges):
                 scene_frames = frames[start_index : end_index + 1]
                 scene_extra = {
@@ -107,8 +135,9 @@ class VideoScenePipeline:
                     classifier = NullSceneClassifier()
                     labels = classifier.classify_scene(scene_frames)
                     scene_extra["classification_error"] = str(exc)
-                representative = scene_frames[len(scene_frames) // 2].path if scene_frames else None
+                representative = choose_representative_frame(scene_frames)
                 confidence = labels[0].confidence if labels else 0.0
+                quality = score_scene_quality(scene_frames) if options.enable_quality_scoring else None
                 scenes.append(
                     SceneMetadata(
                         scene_id=f"{job_id}:scene_{scene_index:04d}",
@@ -120,9 +149,11 @@ class VideoScenePipeline:
                         representative_frame=representative,
                         labels=labels,
                         confidence=confidence,
+                        quality=quality,
                         metadata=scene_extra,
                     )
                 )
+            classification_details.update(classifier.runtime_info())
 
         if options.enable_clip:
             with recorder.stage("clip_embedding", model=self.settings.clip_model_name):
@@ -151,6 +182,8 @@ class VideoScenePipeline:
                 temporal_window_size=options.temporal_window_size,
                 temporal_stride=options.temporal_stride,
                 clip_enabled=options.enable_clip,
+                quality_scoring_enabled=options.enable_quality_scoring,
+                multi_gpu_enabled=options.enable_multi_gpu,
             ),
             frames=frames,
             temporal_windows=temporal_windows,

@@ -149,12 +149,13 @@ button:disabled {
 
 .metric-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 14px;
 }
 
 .metric,
 .scene-tile,
+.quality-board,
 .stage-table,
 .summary-band,
 .empty-state,
@@ -337,9 +338,55 @@ th {
   overflow-wrap: anywhere;
 }
 
+.quality-strip {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  color: #42515c;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
 meter {
   width: 100%;
   height: 8px;
+}
+
+.quality-board {
+  padding: 18px;
+}
+
+.quality-list {
+  display: grid;
+  gap: 10px;
+}
+
+.quality-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.8fr) minmax(120px, 1.2fr) auto minmax(140px, 1fr);
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 0;
+  border-top: 1px solid #e6ebf0;
+}
+
+.quality-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.quality-row span,
+.quality-row p {
+  color: #667684;
+  font-size: 0.82rem;
+}
+
+.quality-row p {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .empty-state {
@@ -379,8 +426,9 @@ meter {
     border-bottom: 1px solid #dde3ea;
   }
 
-  .metric-grid {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  .quality-row {
+    grid-template-columns: 1fr;
+    align-items: start;
   }
 }
 
@@ -398,9 +446,7 @@ meter {
     padding-right: 18px;
   }
 
-  .split,
-  .metric-grid {
+  .split {
     grid-template-columns: 1fr;
   }
 }
-

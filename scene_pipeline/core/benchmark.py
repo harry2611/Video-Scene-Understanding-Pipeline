@@ -16,14 +16,15 @@ class BenchmarkRecorder:
     started_at: float = field(default_factory=time.perf_counter)
 
     @contextmanager
-    def stage(self, name: str, **details: object) -> Iterator[None]:
+    def stage(self, name: str, **details: object) -> Iterator[dict[str, object]]:
         stage_started = time.perf_counter()
+        stage_details = dict(details)
         try:
-            yield
+            yield stage_details
         finally:
             latency_ms = (time.perf_counter() - stage_started) * 1000.0
             self.stages.append(
-                BenchmarkStage(name=name, latency_ms=latency_ms, details=dict(details))
+                BenchmarkStage(name=name, latency_ms=latency_ms, details=stage_details)
             )
 
     def metrics(self, total_frames: int) -> BenchmarkMetrics:
@@ -35,4 +36,3 @@ class BenchmarkRecorder:
             total_frames=total_frames,
             stage_latencies=self.stages,
         )
-

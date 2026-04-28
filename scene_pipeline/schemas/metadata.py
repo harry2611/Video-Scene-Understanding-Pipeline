@@ -12,12 +12,21 @@ class LabelScore(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 
 
+class FrameQuality(BaseModel):
+    blur_variance: float = Field(ge=0.0)
+    brightness: float = Field(ge=0.0, le=255.0)
+    quality_score: float = Field(ge=0.0, le=1.0)
+    is_low_quality: bool
+    flags: list[str] = Field(default_factory=list)
+
+
 class FrameMetadata(BaseModel):
     frame_index: int = Field(ge=0)
     timestamp: float = Field(ge=0.0)
     path: str
     width: int | None = None
     height: int | None = None
+    quality: FrameQuality | None = None
 
 
 class TemporalWindow(BaseModel):
@@ -34,6 +43,8 @@ class PipelineConfig(BaseModel):
     temporal_window_size: int
     temporal_stride: int
     clip_enabled: bool
+    quality_scoring_enabled: bool = True
+    multi_gpu_enabled: bool = True
 
 
 class BenchmarkStage(BaseModel):
@@ -49,6 +60,16 @@ class BenchmarkMetrics(BaseModel):
     stage_latencies: list[BenchmarkStage]
 
 
+class SceneQuality(BaseModel):
+    data_quality_score: float = Field(ge=0.0, le=1.0)
+    low_quality_frame_ratio: float = Field(ge=0.0, le=1.0)
+    usable_frame_count: int = Field(ge=0)
+    total_frame_count: int = Field(ge=0)
+    quality_grade: str
+    recommended_action: str
+    flags: list[str] = Field(default_factory=list)
+
+
 class SceneMetadata(BaseModel):
     scene_id: str
     scene_index: int = Field(ge=0)
@@ -60,6 +81,7 @@ class SceneMetadata(BaseModel):
     labels: list[LabelScore] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0, default=0.0)
     clip_embedding: list[float] | None = None
+    quality: SceneQuality | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -88,4 +110,3 @@ class SceneSearchResult(BaseModel):
     score: float
     labels: list[LabelScore]
     representative_frame: str | None = None
-

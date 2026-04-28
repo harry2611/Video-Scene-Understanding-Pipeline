@@ -29,7 +29,9 @@
         "classifier",
         "temporal_window_size",
         "temporal_stride",
-        "clip_enabled"
+        "clip_enabled",
+        "quality_scoring_enabled",
+        "multi_gpu_enabled"
       ],
       "properties": {
         "fps": { "type": "number", "exclusiveMinimum": 0 },
@@ -37,7 +39,9 @@
         "classifier": { "type": "string", "enum": ["resnet50", "efficientnet_b0"] },
         "temporal_window_size": { "type": "integer", "minimum": 1 },
         "temporal_stride": { "type": "integer", "minimum": 1 },
-        "clip_enabled": { "type": "boolean" }
+        "clip_enabled": { "type": "boolean" },
+        "quality_scoring_enabled": { "type": "boolean" },
+        "multi_gpu_enabled": { "type": "boolean" }
       },
       "additionalProperties": false
     },
@@ -73,7 +77,28 @@
         "timestamp": { "type": "number", "minimum": 0 },
         "path": { "type": "string" },
         "width": { "type": ["integer", "null"], "minimum": 1 },
-        "height": { "type": ["integer", "null"], "minimum": 1 }
+        "height": { "type": ["integer", "null"], "minimum": 1 },
+        "quality": {
+          "anyOf": [
+            { "$ref": "#/$defs/frame_quality" },
+            { "type": "null" }
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "frame_quality": {
+      "type": "object",
+      "required": ["blur_variance", "brightness", "quality_score", "is_low_quality", "flags"],
+      "properties": {
+        "blur_variance": { "type": "number", "minimum": 0 },
+        "brightness": { "type": "number", "minimum": 0, "maximum": 255 },
+        "quality_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "is_low_quality": { "type": "boolean" },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "additionalProperties": false
     },
@@ -102,6 +127,7 @@
         "frame_indices",
         "labels",
         "confidence",
+        "quality",
         "metadata"
       ],
       "properties": {
@@ -124,7 +150,38 @@
           "type": ["array", "null"],
           "items": { "type": "number" }
         },
+        "quality": {
+          "anyOf": [
+            { "$ref": "#/$defs/scene_quality" },
+            { "type": "null" }
+          ]
+        },
         "metadata": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "scene_quality": {
+      "type": "object",
+      "required": [
+        "data_quality_score",
+        "low_quality_frame_ratio",
+        "usable_frame_count",
+        "total_frame_count",
+        "quality_grade",
+        "recommended_action",
+        "flags"
+      ],
+      "properties": {
+        "data_quality_score": { "type": "number", "minimum": 0, "maximum": 1 },
+        "low_quality_frame_ratio": { "type": "number", "minimum": 0, "maximum": 1 },
+        "usable_frame_count": { "type": "integer", "minimum": 0 },
+        "total_frame_count": { "type": "integer", "minimum": 0 },
+        "quality_grade": { "type": "string", "enum": ["excellent", "good", "review", "poor", "unknown"] },
+        "recommended_action": { "type": "string", "enum": ["accept", "review", "reject"] },
+        "flags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
       },
       "additionalProperties": false
     },
@@ -159,4 +216,3 @@
   },
   "additionalProperties": false
 }
-

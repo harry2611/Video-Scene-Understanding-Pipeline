@@ -44,6 +44,11 @@ class Settings(BaseSettings):
         "openai/clip-vit-base-patch32",
         validation_alias="PIPELINE_CLIP_MODEL_NAME",
     )
+    enable_quality_scoring: bool = Field(True, validation_alias="PIPELINE_ENABLE_QUALITY_SCORING")
+    blur_threshold: float = Field(100.0, validation_alias="PIPELINE_BLUR_THRESHOLD")
+    brightness_min: float = Field(35.0, validation_alias="PIPELINE_BRIGHTNESS_MIN")
+    brightness_max: float = Field(220.0, validation_alias="PIPELINE_BRIGHTNESS_MAX")
+    enable_multi_gpu: bool = Field(True, validation_alias="PIPELINE_ENABLE_MULTI_GPU")
     queue_name: str = Field("video-scene-jobs", validation_alias="PIPELINE_QUEUE_NAME")
 
 

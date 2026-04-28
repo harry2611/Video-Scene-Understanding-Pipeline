@@ -56,6 +56,8 @@ def save_metadata(session: Session, metadata: VideoMetadata, status: str = "comp
                 representative_frame=scene.representative_frame,
                 labels=[label.model_dump(mode="json") for label in scene.labels],
                 clip_embedding=scene.clip_embedding,
+                quality_score=scene.quality.data_quality_score if scene.quality else None,
+                quality_payload=scene.quality.model_dump(mode="json") if scene.quality else None,
                 extra_metadata=scene.metadata,
             )
         )
@@ -98,6 +100,12 @@ def aggregate_metrics(session: Session) -> dict:
         for job in jobs
         if job.benchmark_payload
     ]
+    quality_values = [
+        float(scene.quality_score)
+        for scene in session.scalars(select(SceneRecord).where(SceneRecord.quality_score.is_not(None)))
+        if scene.quality_score is not None
+    ]
+    low_quality_scenes = sum(1 for value in quality_values if value < 0.55)
     return {
         "total_jobs": total_jobs,
         "completed_jobs": completed_jobs,
@@ -105,6 +113,8 @@ def aggregate_metrics(session: Session) -> dict:
         "total_scenes": total_scenes,
         "average_frames_per_second": _average(fps_values),
         "average_total_latency_ms": _average(latency_values),
+        "average_quality_score": _average(quality_values),
+        "low_quality_scenes": low_quality_scenes,
     }
 
 
@@ -114,4 +124,3 @@ def _average(values: list[float]) -> float:
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
-

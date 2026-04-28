@@ -18,6 +18,8 @@ def process_command(args: argparse.Namespace) -> None:
         temporal_window_size=args.window_size,
         temporal_stride=args.stride,
         enable_clip=not args.disable_clip,
+        enable_quality_scoring=not args.disable_quality_scoring,
+        enable_multi_gpu=not args.disable_multi_gpu,
     )
     metadata = pipeline.process(args.source, options=options)
     output = Path(args.output) if args.output else None
@@ -41,6 +43,8 @@ def build_parser() -> argparse.ArgumentParser:
     process.add_argument("--window-size", type=int, default=8)
     process.add_argument("--stride", type=int, default=4)
     process.add_argument("--disable-clip", action="store_true")
+    process.add_argument("--disable-quality-scoring", action="store_true")
+    process.add_argument("--disable-multi-gpu", action="store_true")
     process.add_argument("--output", help="Optional JSON output path")
     process.set_defaults(func=process_command)
     return parser
@@ -54,4 +58,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

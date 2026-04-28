@@ -6,6 +6,8 @@ import {
   Loader2,
   Play,
   Search,
+  ShieldCheck,
+  SlidersHorizontal,
   UploadCloud,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -18,6 +20,8 @@ function App() {
   const [classifier, setClassifier] = useState("resnet50");
   const [detector, setDetector] = useState("histogram");
   const [clipEnabled, setClipEnabled] = useState(true);
+  const [qualityEnabled, setQualityEnabled] = useState(true);
+  const [multiGpuEnabled, setMultiGpuEnabled] = useState(true);
   const [job, setJob] = useState(null);
   const [status, setStatus] = useState(null);
   const [metadata, setMetadata] = useState(null);
@@ -43,6 +47,15 @@ function App() {
   const scenes = metadata?.scenes ?? [];
   const stageRows = metadata?.benchmark?.stage_latencies ?? [];
   const completed = status?.status === "completed";
+  const qualityScores = scenes
+    .map((scene) => scene.quality?.data_quality_score)
+    .filter((score) => typeof score === "number");
+  const averageQuality = qualityScores.length
+    ? qualityScores.reduce((total, score) => total + score, 0) / qualityScores.length
+    : metrics?.average_quality_score;
+  const lowQualityScenes = scenes.filter(
+    (scene) => (scene.quality?.data_quality_score ?? 1) < 0.55,
+  ).length;
 
   const topLabels = useMemo(() => {
     const counts = new Map();
@@ -69,6 +82,8 @@ function App() {
           classifier,
           scene_detector: detector,
           enable_clip: clipEnabled,
+          enable_quality_scoring: qualityEnabled,
+          enable_multi_gpu: multiGpuEnabled,
         }),
       });
       if (!response.ok) throw new Error(await response.text());
@@ -184,6 +199,24 @@ function App() {
               <span>CLIP embeddings</span>
             </label>
 
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={qualityEnabled}
+                onChange={(event) => setQualityEnabled(event.target.checked)}
+              />
+              <span>Quality scoring</span>
+            </label>
+
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={multiGpuEnabled}
+                onChange={(event) => setMultiGpuEnabled(event.target.checked)}
+              />
+              <span>DataParallel GPU</span>
+            </label>
+
             <button type="submit" disabled={busy || !source.trim()}>
               {busy ? <Loader2 className="spin" size={18} /> : <UploadCloud size={18} />}
               Submit
@@ -222,6 +255,16 @@ function App() {
               value={formatNumber(metadata?.benchmark?.total_latency_ms ?? metrics?.average_total_latency_ms)}
             />
             <Metric icon={<BarChart3 />} label="Jobs" value={metrics?.total_jobs ?? 0} />
+            <Metric
+              icon={<ShieldCheck />}
+              label="Quality"
+              value={`${Math.round((averageQuality ?? 0) * 100)}%`}
+            />
+            <Metric
+              icon={<SlidersHorizontal />}
+              label="Review Scenes"
+              value={scenes.length ? lowQualityScenes : metrics?.low_quality_scenes || 0}
+            />
           </div>
 
           {completed && (
@@ -234,6 +277,7 @@ function App() {
                 </p>
               </div>
               <div className="label-stack">
+                {metadata?.config?.multi_gpu_enabled && <span>DataParallel ready</span>}
                 {topLabels.map(([label, count]) => (
                   <span key={label}>
                     {label} <strong>{count}</strong>
@@ -268,6 +312,17 @@ function App() {
               <EmptyState icon={<Play />} text="Submit a video to populate latency metrics." />
             )}
           </section>
+
+          {scenes.length > 0 && (
+            <section className="quality-board">
+              <h2>Scene Quality</h2>
+              <div className="quality-list">
+                {scenes.map((scene) => (
+                  <QualityRow key={scene.scene_id} scene={scene} />
+                ))}
+              </div>
+            </section>
+          )}
 
           {searchResults.length > 0 && (
             <section className="scene-grid-wrap">
@@ -310,6 +365,7 @@ function Metric({ icon, label, value }) {
 
 function SceneTile({ scene, score }) {
   const label = scene.labels?.[0];
+  const quality = scene.quality?.data_quality_score;
   return (
     <article className="scene-tile">
       <div className="thumb">
@@ -327,9 +383,32 @@ function SceneTile({ scene, score }) {
           </span>
         </div>
         <p>{label ? `${label.label} (${Math.round(label.confidence * 100)}%)` : "No label"}</p>
+        {typeof quality === "number" && (
+          <div className="quality-strip">
+            <span>{scene.quality.quality_grade}</span>
+            <meter min="0" max="1" value={quality} />
+            <strong>{Math.round(quality * 100)}%</strong>
+          </div>
+        )}
         {typeof score === "number" && <meter min="0" max="1" value={Math.max(score, 0)} />}
       </div>
     </article>
+  );
+}
+
+function QualityRow({ scene }) {
+  const quality = scene.quality;
+  if (!quality) return null;
+  return (
+    <div className="quality-row">
+      <div>
+        <strong>Scene {scene.scene_index + 1}</strong>
+        <span>{quality.recommended_action}</span>
+      </div>
+      <meter min="0" max="1" value={quality.data_quality_score} />
+      <strong>{Math.round(quality.data_quality_score * 100)}%</strong>
+      <p>{quality.flags.length ? quality.flags.join(", ") : "clean"}</p>
+    </div>
   );
 }
 
@@ -361,4 +440,3 @@ function formatNumber(value) {
 }
 
 export default App;
-

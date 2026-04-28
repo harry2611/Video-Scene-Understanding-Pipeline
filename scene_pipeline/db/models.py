@@ -43,7 +43,8 @@ class SceneRecord(Base):
     representative_frame: Mapped[str | None] = mapped_column(Text, nullable=True)
     labels: Mapped[list | None] = mapped_column(JSON, nullable=True)
     clip_embedding: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    quality_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    quality_payload: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     extra_metadata: Mapped[dict | None] = mapped_column("metadata", JSON, nullable=True)
 
     job: Mapped[VideoJob] = relationship(back_populates="scenes")
-

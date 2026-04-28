@@ -11,6 +11,8 @@ class VideoRequest(BaseModel):
     temporal_window_size: int | None = Field(default=None, gt=0)
     temporal_stride: int | None = Field(default=None, gt=0)
     enable_clip: bool | None = None
+    enable_quality_scoring: bool | None = None
+    enable_multi_gpu: bool | None = None
 
 
 class JobResponse(BaseModel):
@@ -25,4 +27,3 @@ class JobStatusResponse(BaseModel):
     status: str
     error: str | None = None
     benchmark: dict | None = None
-

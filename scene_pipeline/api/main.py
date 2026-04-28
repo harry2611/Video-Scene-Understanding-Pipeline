@@ -166,6 +166,14 @@ def _options_from_request(request: VideoRequest, settings: Settings) -> Pipeline
         temporal_window_size=request.temporal_window_size or settings.temporal_window_size,
         temporal_stride=request.temporal_stride or settings.temporal_stride,
         enable_clip=settings.enable_clip if request.enable_clip is None else request.enable_clip,
+        enable_quality_scoring=(
+            settings.enable_quality_scoring
+            if request.enable_quality_scoring is None
+            else request.enable_quality_scoring
+        ),
+        enable_multi_gpu=(
+            settings.enable_multi_gpu if request.enable_multi_gpu is None else request.enable_multi_gpu
+        ),
     )
 
 
